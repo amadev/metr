@@ -14,6 +14,7 @@ matplotlib.use('AGG')
 DIR = os.path.dirname(__file__) + '/'
 DB = DIR + 'db/metr.db'
 BASE_URL = '/metr/'
+IMAGE_DIR = DIR + 'output/'
 
 
 class Response(object):
@@ -24,7 +25,9 @@ def show_metric(metric):
     conn = sqlite3.connect(DB)
     points = get_points(conn, metric)
     conn.close()
-    fname = DIR + 'output/%s.jpg' % metric
+    if not os.path.exists(IMAGE_DIR):
+        os.makedirs(IMAGE_DIR)
+    fname = IMAGE_DIR + '%s.png' % metric
     d = Dataset([Dataset.DATE, Dataset.FLOAT])
     d.load(points)
     plot_date(d, output=fname, figsize=(14, 7), linestyle='-')
@@ -33,12 +36,12 @@ def show_metric(metric):
     r = Response()
     r.body = data
     r.code = '200 OK'
-    r.headers = [('content-type', 'image/jpeg'),
+    r.headers = [('content-type', 'image/png'),
                  ('content-length', str(len(r.body)))]
     return r
 
 
-def update_metric(metric, value, dt):
+def update_metric(metric, value, dt=None):
     conn = sqlite3.connect(DB)
     set_point(conn, metric, value, dt)
     conn.close()
@@ -69,46 +72,26 @@ def list_metrics():
     return r
 
 
+def get_handler(environ):
+    default = list_metrics
+
+    routes = {
+        r'^/metr/([a-z0-9\-_]{3,128})$': show_metric,
+        r'^/metr/([a-z0-9\-_]{3,128})/([0-9\.]{1,16})$': update_metric,
+        r'^/metr/([a-z0-9\-_]{3,128})/([0-9\.]{1,16})/([a-z0-9\-_T]{3,20})$': \
+          update_metric,
+    }
+    path_info = environ.get('PATH_INFO', '')
+    for r in routes:
+        match = re.match(r, path_info)
+        if match:
+            return routes[r], match.groups(), match.groupdict()
+    return default, [], {}
+
+
 def application(environ, start_response):
 
-    segments = filter(None, environ['PATH_INFO'].split('/'))
-
-    try:
-        metric = segments[0]
-    except IndexError:
-        metric = None
-
-    try:
-        value = segments[1]
-    except IndexError:
-        value = None
-
-    try:
-        dt = segments[2]
-    except IndexError:
-        dt = None
-
-    # TODO: input validation
-
-    #     if re.match('^[a-z\-]{1, 255}', metric):
-    #         raise ValueError('invalid metric')
-    #     r = show_metric(metric)
-
-    r = Response()
-    r.code = '200 OK'
-    r.body = 'Metrics'
-    r.headers = [('Content-type', 'text/plain'),
-                 ('Content-Length', str(len(r.body)))]
-
-    if metric:
-        if not value:
-            r = show_metric(metric)
-        else:
-            r = update_metric(metric, value, dt)
-    else:
-        r = list_metrics()
-
-    # print >> environ['wsgi.errors'], 'ENVIRON', environ
-
+    handler, args, kwargs = get_handler(environ)
+    r = handler(*args, **kwargs)
     start_response(r.code, r.headers)
     return [r.body]
