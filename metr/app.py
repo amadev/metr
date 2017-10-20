@@ -11,7 +11,7 @@ from metr.db import get_points, set_point
 matplotlib.use('AGG')
 
 
-DIR = os.path.dirname(__file__) + '/'
+DIR = '/srv/metr/'
 DB = DIR + 'db/metr.db'
 BASE_URL = '/metr/'
 IMAGE_DIR = DIR + 'output/'
