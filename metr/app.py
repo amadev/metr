@@ -5,7 +5,7 @@ import os
 import sqlite3
 from doan.dataset import Dataset
 from doan.graph import plot_date
-from metr.db import get_points, set_point
+from metr.db import get_points, set_point, migrate
 
 
 matplotlib.use('AGG')
@@ -87,6 +87,11 @@ def get_handler(environ):
         if match:
             return routes[r], match.groups(), match.groupdict()
     return default, [], {}
+
+
+def migrate_db():
+    conn = sqlite3.connect(DB)
+    migrate(conn)
 
 
 def application(environ, start_response):

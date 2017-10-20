@@ -2,20 +2,26 @@ import datetime
 import dateutil.parser
 
 
-def init_db(conn):
+def migrate(conn):
     with conn:
         conn.executescript('''
-          create table metric (
+          create table if not exists metric (
             id integer primary key autoincrement,
             name varchar(255)
           );
 
-          create table point (
+          create table if not exists point (
             id integer primary key autoincrement,
             metric_id int,
             value varchar(255),
             created datetime
           );
+
+          create unique index if not exists idx_metric_name
+            on metric (name);
+
+          create index if not exists idx_point_metric_id
+            on point (metric_id);
         ''')
 
 

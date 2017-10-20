@@ -2,7 +2,7 @@ import os
 import uuid
 import pytest
 import sqlite3
-from metr.db import init_db, get_points, set_point
+from metr.db import migrate, get_points, set_point
 
 
 TEST_DB = '/tmp/test-db-' + str(uuid.uuid4()) + '.sqlite'
@@ -11,7 +11,7 @@ TEST_DB = '/tmp/test-db-' + str(uuid.uuid4()) + '.sqlite'
 @pytest.fixture()
 def conn():
     conn = sqlite3.connect(TEST_DB)
-    init_db(conn)
+    migrate(conn)
     yield conn
     print("teardown db")
     conn.close()
