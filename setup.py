@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 setup(
     name="metr",
-    version="0.2",
+    version="0.2.1",
     packages=find_packages(),
     # metadata for upload to PyPI
     author="Andrey Volkov",
