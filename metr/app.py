@@ -78,8 +78,8 @@ def get_handler(environ):
     routes = {
         r'^/metr/([a-z0-9\-_]{3,128})$': show_metric,
         r'^/metr/([a-z0-9\-_]{3,128})/([0-9\.]{1,16})$': update_metric,
-        r'^/metr/([a-z0-9\-_]{3,128})/([0-9\.]{1,16})/([a-z0-9\-_T]{3,20})$': \
-          update_metric,
+        r'^/metr/([a-z0-9\-_]{3,128})/([0-9\.]{1,16})/([a-z0-9\-_T]{3,20})$':
+        update_metric,
     }
     path_info = environ.get('PATH_INFO', '')
     for r in routes:

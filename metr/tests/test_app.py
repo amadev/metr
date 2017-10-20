@@ -31,6 +31,8 @@ def test_show_metric(db, mkdir, savefig, open):
 
 @mock.patch('sqlite3.connect')
 def test_update_metric(db):
-    app.application({'PATH_INFO': '/metr/meric-2/10'}, lambda status, headers: 1)
-    app.application({'PATH_INFO': '/metr/meric-2/10/2017-01-01'},
-                    lambda status, headers: 1)
+    app.application(
+        {'PATH_INFO': '/metr/meric-2/10'}, lambda status, headers: 1)
+    app.application(
+        {'PATH_INFO': '/metr/meric-2/10/2017-01-01'},
+        lambda status, headers: 1)
