@@ -6,15 +6,15 @@ import sqlite3
 from doan.dataset import Dataset
 from doan.graph import plot_date
 from metr.db import get_points, set_point, migrate
+from metr.config import conf
 
 
 matplotlib.use('AGG')
 
 
-DIR = '/srv/metr/'
-DB = DIR + 'db/metr.db'
-BASE_URL = '/metr/'
-IMAGE_DIR = DIR + 'output/'
+DB = conf.get('db_path', 'metr.db')
+BASE_URL = conf.get('base_url', '')
+IMAGE_DIR = conf.get('output_dir', 'output')
 
 
 class Response(object):
@@ -27,7 +27,7 @@ def show_metric(metric):
     conn.close()
     if not os.path.exists(IMAGE_DIR):
         os.makedirs(IMAGE_DIR)
-    fname = IMAGE_DIR + '%s.png' % metric
+    fname = IMAGE_DIR + '/%s.png' % metric
     d = Dataset([Dataset.DATE, Dataset.FLOAT])
     d.load(points)
     plot_date(d, output=fname, figsize=(14, 7), linestyle='-')
@@ -49,7 +49,7 @@ def update_metric(metric, value, dt=None):
     r = Response()
     r.body = ''
     r.code = '302 Found'
-    r.headers = [('Location', '/metr/%s' % metric)]
+    r.headers = [('Location', BASE_URL + '/%s' % metric)]
     return r
 
 
@@ -61,7 +61,7 @@ def list_metrics():
     data = []
     rows = c.fetchall()
     for row in rows:
-        data.append('<a href="%s">%s</a>' % (BASE_URL + row[0], row[0]))
+        data.append('<a href="%s">%s</a>' % (BASE_URL + '/' + row[0], row[0]))
     conn.close()
 
     r = Response()
@@ -76,10 +76,10 @@ def get_handler(environ):
     default = list_metrics
 
     routes = {
-        r'^/metr/([a-z0-9\-_]{3,128})$': show_metric,
-        r'^/metr/([a-z0-9\-_]{3,128})/([0-9\.]{1,16})$': update_metric,
-        r'^/metr/([a-z0-9\-_]{3,128})/([0-9\.]{1,16})/([a-z0-9\-_T]{3,20})$':
-        update_metric,
+        r'^%s/([a-z0-9\-_]{3,128})$' % BASE_URL: show_metric,
+        r'^%s/([a-z0-9\-_]{3,128})/([0-9\.]{1,16})$' % BASE_URL: update_metric,
+        ((r'^%s/([a-z0-9\-_]{3,128})/([0-9\.]{1,16})/'
+          '([a-z0-9\-_T]{3,20})$') % BASE_URL): update_metric,
     }
     path_info = environ.get('PATH_INFO', '')
     for r in routes:
