@@ -21,8 +21,11 @@ def test_list_metrics(db):
     app.application({}, lambda status, headers: 1)
 
 
+@mock.patch('__builtin__.open')
+@mock.patch('matplotlib.pyplot.savefig')
+@mock.patch('os.makedirs')
 @mock.patch('sqlite3.connect')
-def test_show_metric(db):
+def test_show_metric(db, mkdir, savefig, open):
     app.application({'PATH_INFO': '/metr/meric-1'}, lambda status, headers: 1)
 
 
