@@ -5,7 +5,7 @@ import sqlite3
 from metr.db import init_db, get_points, set_point
 
 
-TEST_DB = 'test-db-' + str(uuid.uuid4()) + '.sqlite'
+TEST_DB = '/tmp/test-db-' + str(uuid.uuid4()) + '.sqlite'
 
 
 @pytest.fixture()
