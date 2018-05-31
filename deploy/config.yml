@@ -1,0 +1,2 @@
+app_virtualenv: /srv/www/virtualenvs/metr
+app_path: /srv/www/metr

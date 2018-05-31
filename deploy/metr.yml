@@ -1,0 +1,69 @@
+- name: make sure Python is installed on the VM
+  hosts: metr
+  pre_tasks:
+    - raw: sudo apt-get update && sudo apt-get install -y python
+  gather_facts: no
+
+- name: metr install
+  hosts: metr
+  become: yes
+  vars_files:
+    - config.yml
+  tasks:
+    - name: libraries
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - python-sqlite
+        - python-pytest
+        - python-matplotlib
+    - name: metr package
+      pip:
+        name: metr
+        state: latest
+        virtualenv_site_packages: yes
+        virtualenv: "{{ app_virtualenv }}"
+    - name: make db dir
+      file:
+        state: directory
+        path: "{{ app_path }}/db"
+        owner: ubuntu
+        recurse: yes
+    - name: make output dir
+      file:
+        state: directory
+        path: "{{ app_path }}/output"
+        owner: ubuntu
+        recurse: yes
+    - name: deploy config
+      template:
+        src: app_config.py
+        dest: '{{ app_virtualenv }}/lib/python2.7/site-packages/metr/config.py'
+
+- name: metr test and db migration
+  hosts: metr
+  become: yes
+  vars_files:
+    - config.yml
+  tasks:
+    # - name: run metr tests
+    #   command: "pytest --pyargs metr.tests"
+    - name: test wsgi app
+      shell: '{{ app_virtualenv }}/bin/python -c "from metr.app import application"'
+    - name: migrate db
+      shell: '{{ app_virtualenv }}/bin/python -c "from metr.app import migrate_db; migrate_db()"'
+      
+- name: install system services
+  hosts: metr
+  become: yes
+  vars_files:
+    - config.yml
+  roles:
+      - { role: dorianpula.nginx-uwsgi-supervisor,
+          app_name: metr,
+          app_venv: "{{ app_virtualenv }}",
+          app_root_path: "{{ app_path }}",
+          app_nginx_hostname: metr.local,
+          app_uwsgi_port: 8080,
+          app_uwsgi_executable: "metr.app"}
